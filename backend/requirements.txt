@@ -1,0 +1,10 @@
+Flask
+flask-cors
+pymongo
+SpeechRecognition
+pydub
+pyaudio
+gtts
+playsound
+pygame
+python-telegram-bot==13.15
