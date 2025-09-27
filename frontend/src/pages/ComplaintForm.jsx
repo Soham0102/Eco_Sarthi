@@ -268,6 +268,10 @@ export default function ComplaintForm() {
       Object.keys(formData).forEach((key) => {
         formDataToSend.append(key, formData[key]);
       });
+      // Backend expects 'description'; mirror from 'complaint'
+      if (formData.complaint && !formData.description) {
+        formDataToSend.append("description", formData.complaint);
+      }
 
       if (photo) {
         formDataToSend.append("photo", photo);
@@ -289,13 +293,17 @@ export default function ComplaintForm() {
         formDataToSend.append("longitude", latLng.longitude);
       }
 
+      // include citizenId if logged in so backend can award points
+      const citizenId = localStorage.getItem('citizenId');
+      if (citizenId) formDataToSend.append('citizenId', citizenId);
+
       const res = await axios.post("http://localhost:5000/api/complaint", formDataToSend, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setComplaintId(res.data.complaint.complaintId);
+      setComplaintId(res.data.complaintId);
       setSubmitted(true);
-      alert(`Complaint submitted successfully! Your Complaint ID is: ${res.data.complaint.complaintId}`);
+      alert(`Complaint submitted successfully! Your Complaint ID is: ${res.data.complaintId}`);
 
       // Reset form
       setFormData({

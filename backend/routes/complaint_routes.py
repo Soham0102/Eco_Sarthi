@@ -125,7 +125,27 @@ def submit_complaint():
             }), 201
 
         inserted = complaints_collection.insert_one(complaint)
-        
+
+        # Award citizen points if a citizenId is provided
+        try:
+            citizen_id = (request.form.get('citizenId') if request.content_type and request.content_type.startswith("multipart/form-data") else (request.json or {}).get('citizenId'))
+            if citizen_id:
+                import sqlite3
+                conn = sqlite3.connect('ecosarthi.db')
+                cursor = conn.cursor()
+                # Add citizen activity and increment points
+                cursor.execute('''
+                    INSERT INTO citizen_activities (citizen_id, activity_type, description, points_earned)
+                    VALUES (?, 'Complaint', 'Filed a complaint', 10)
+                ''', (citizen_id,))
+                cursor.execute('''
+                    UPDATE citizens SET green_points = green_points + 10 WHERE citizen_id = ?
+                ''', (citizen_id,))
+                conn.commit()
+                conn.close()
+        except Exception:
+            pass
+
         # We'll return the complaint ID and a token for client-side use
         return jsonify({
             "success": True,

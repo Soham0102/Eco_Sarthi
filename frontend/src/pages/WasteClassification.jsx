@@ -351,48 +351,35 @@ const WasteClassification = () => {
 
   const handleAnalyze = async () => {
     if (!selectedFile) return;
-    
     setIsAnalyzing(true);
     setAnalysisProgress(0);
-    
     try {
-      // Simulate analysis progress
-      const progressInterval = setInterval(() => {
-        setAnalysisProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-      
-      // Process the image
-      const imageAnalysis = await processImage(selectedFile);
-      
-      // Classify the waste based on image analysis
-      const classification = classifyWasteFromImage(imageAnalysis);
-      
-      // Get the waste details from database
-      const wasteDetails = wasteDatabase[classification.wasteType];
-      
-      // Combine classification results with database details
-      const finalResult = {
-        ...wasteDetails,
-        confidence: classification.confidence,
-        imageAnalysis: classification.analysis,
-        classificationScores: classification.scores
+      const form = new FormData();
+      form.append('image', selectedFile);
+      const resp = await fetch('/api/waste/classify', { method: 'POST', body: form });
+      if (!resp.ok) throw new Error('Classification failed');
+      const data = await resp.json();
+
+      const backendType = data?.result?.wasteType;
+      const backendConfidence = data?.result?.confidence;
+      const wasteDetails = wasteDatabase[backendType] || {
+        type: 'Unknown',
+        category: 'Unknown',
+        description: 'No match found',
+        tips: []
       };
-      
-      // Complete the progress
+
       setAnalysisProgress(100);
-      
       setTimeout(() => {
-        setResult(finalResult);
+        setResult({
+          ...wasteDetails,
+          confidence: backendConfidence,
+          imageAnalysis: data?.result?.features,
+          classificationScores: data?.result?.scores
+        });
         setIsAnalyzing(false);
         setAnalysisProgress(0);
-      }, 500);
-      
+      }, 300);
     } catch (error) {
       console.error('Error analyzing image:', error);
       setIsAnalyzing(false);

@@ -144,14 +144,14 @@ const Home = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             <button 
-              onClick={() => navigate('/user-options')}
+              onClick={() => navigate('/user-login')}
               className="group relative bg-gradient-to-r from-emerald-600 to-teal-600 px-12 py-5 rounded-2xl text-xl font-bold shadow-2xl transition-all duration-500 hover:scale-110 hover:shadow-emerald-500/25 min-w-[250px] overflow-hidden hover-lift animate-soft-glow"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute inset-0 animate-shimmer group-hover:animate-none"></div>
               <span className="relative flex items-center justify-center text-white">
                 <Leaf className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
-                Get Started
+                Citizen Login
                 <ChevronRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform duration-300" />
               </span>
             </button>

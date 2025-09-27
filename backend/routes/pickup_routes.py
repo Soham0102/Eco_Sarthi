@@ -39,6 +39,25 @@ def create_pickup_request():
                     "message": f"Missing required field: {field}"
                 }), 400
 
+        # Enforce biodegradable-only materials
+        biodegradable_keywords = {"bio", "biodegradable", "wet", "organic", "food", "compost"}
+        materials = [m.strip() for m in data.get("materials", [])]
+        if not materials:
+            return jsonify({
+                "success": False,
+                "message": "materials must contain only biodegradable items"
+            }), 400
+
+        def is_biodegradable(item: str) -> bool:
+            lower = item.lower()
+            return any(k in lower for k in biodegradable_keywords)
+
+        if not all(is_biodegradable(m) for m in materials):
+            return jsonify({
+                "success": False,
+                "message": "Only biodegradable waste is allowed for pickup/reschedule"
+            }), 400
+
         # Generate unique pickup ID
         pickup_id = generate_pickup_id()
         
@@ -51,7 +70,7 @@ def create_pickup_request():
             "address": data["address"],
             "latitude": data.get("latitude"),
             "longitude": data.get("longitude"),
-            "materials": data["materials"],  # List of recyclable materials
+            "materials": materials,  # Biodegradable-only
             "quantity": data.get("quantity", "Medium"),
             "preferredDate": data["preferredDate"],
             "preferredTime": data["preferredTime"],
@@ -236,6 +255,19 @@ def update_pickup_status(pickup_id):
                 "message": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
             }), 400
 
+        # Enforce biodegradable-only if rescheduling modifies materials
+        if "materials" in data:
+            biodegradable_keywords = {"bio", "biodegradable", "wet", "organic", "food", "compost"}
+            materials = [m.strip() for m in data.get("materials", [])]
+            def is_biodegradable(item: str) -> bool:
+                lower = item.lower()
+                return any(k in lower for k in biodegradable_keywords)
+            if not materials or not all(is_biodegradable(m) for m in materials):
+                return jsonify({
+                    "success": False,
+                    "message": "Only biodegradable waste is allowed for pickup/reschedule"
+                }), 400
+
         # Update the pickup request
         update_data = {
             "status": new_status,
@@ -255,6 +287,9 @@ def update_pickup_status(pickup_id):
             update_data["pickupDate"] = data.get("pickupDate")
             update_data["pickupTime"] = data.get("pickupTime")
             update_data["assignedDriver"] = data.get("assignedDriver")
+
+        if "materials" in data:
+            update_data["materials"] = [m.strip() for m in data.get("materials", [])]
 
         result = pickup_collection.update_one(
             {"id": pickup_id},
